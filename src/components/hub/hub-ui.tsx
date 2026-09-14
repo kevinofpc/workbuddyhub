@@ -133,6 +133,31 @@ export function ContentCard({
           {item.difficulty}
         </span>
       </div>
+      {item.caseType ? (
+        <div className="mb-3 flex flex-wrap gap-1.5 text-[10px] font-bold">
+          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">
+            {
+              {
+                real: "真实实践",
+                tutorial: "教学实操",
+                story: "应用故事",
+              }[item.caseType]
+            }
+          </span>
+          {item.dataNature === "synthetic" ? (
+            <span className="rounded-full bg-violet-50 px-2.5 py-1 text-violet-700">
+              模拟数据
+            </span>
+          ) : null}
+          <span className="rounded-full bg-sky-50 px-2.5 py-1 text-sky-700">
+            {item.verificationStatus === "verified"
+              ? "Hub 已复现"
+              : item.verificationStatus === "community_verified"
+                ? "社区已复现"
+                : "Hub 已编辑"}
+          </span>
+        </div>
+      ) : null}
       <h3 className="text-[17px] font-bold leading-snug text-slate-900">
         {item.title}
       </h3>

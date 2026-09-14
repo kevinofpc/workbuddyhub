@@ -30,6 +30,41 @@ const status = defineField({
 
 const provenance = [
   defineField({
+    name: "contentOrigin",
+    title: "Content origin",
+    type: "string",
+    initialValue: "editorial",
+    options: {
+      list: [
+        { title: "Hub original", value: "original" },
+        { title: "Imported and adapted", value: "imported" },
+        { title: "Community submission", value: "community" },
+        { title: "Editorial synthesis", value: "editorial" },
+      ],
+    },
+  }),
+  defineField({
+    name: "verificationStatus",
+    title: "Verification status",
+    type: "string",
+    initialValue: "edited",
+    options: {
+      list: [
+        { title: "Imported", value: "imported" },
+        { title: "Hub edited", value: "edited" },
+        { title: "Hub verified", value: "verified" },
+        { title: "Community verified", value: "community_verified" },
+        { title: "Outdated", value: "outdated" },
+      ],
+    },
+  }),
+  defineField({
+    name: "verifiedAt",
+    title: "Practice verified at",
+    description: "Only set this after the workflow was actually reproduced.",
+    type: "datetime",
+  }),
+  defineField({
     name: "sourceUrl",
     title: "Primary source URL",
     type: "url",
@@ -41,6 +76,21 @@ const provenance = [
   defineField({
     name: "sourceName",
     title: "Source name",
+    type: "string",
+  }),
+  defineField({
+    name: "sourceLicense",
+    title: "Source license",
+    type: "string",
+  }),
+  defineField({
+    name: "sourceRepository",
+    title: "Source repository",
+    type: "url",
+  }),
+  defineField({
+    name: "sourcePath",
+    title: "Source path",
     type: "string",
   }),
   defineField({
@@ -217,6 +267,18 @@ export const recipe = defineType({
       title: "Example result",
       type: "markdown",
     }),
+    defineField({
+      name: "acceptance",
+      title: "Acceptance checklist",
+      type: "markdown",
+    }),
+    defineField({
+      name: "deliverables",
+      title: "Deliverables",
+      type: "array",
+      of: [{ type: "string" }],
+    }),
+    defineField({ name: "safety", title: "Safety notes", type: "markdown" }),
     ...taxonomy,
   ],
 });
@@ -258,6 +320,48 @@ export const caseStudy = defineType({
   fields: [
     ...titleAndSlug,
     defineField({
+      name: "caseType",
+      title: "Case type",
+      type: "string",
+      initialValue: "story",
+      validation: (rule) => rule.required(),
+      options: {
+        list: [
+          { title: "Real-world reproducible", value: "real" },
+          { title: "Hands-on tutorial", value: "tutorial" },
+          { title: "Public application story", value: "story" },
+        ],
+        layout: "radio",
+      },
+    }),
+    defineField({
+      name: "dataNature",
+      title: "Data nature",
+      type: "string",
+      initialValue: "not-applicable",
+      options: {
+        list: [
+          { title: "Real data", value: "real" },
+          { title: "Anonymized real data", value: "anonymized" },
+          { title: "Synthetic / teaching data", value: "synthetic" },
+          { title: "Not applicable", value: "not-applicable" },
+        ],
+      },
+    }),
+    defineField({
+      name: "estimatedTime",
+      title: "Estimated practice time (minutes)",
+      type: "number",
+      validation: (rule) => rule.positive(),
+    }),
+    defineField({
+      name: "priority",
+      title: "Case display priority",
+      description: "Higher numbers appear first in the case library.",
+      type: "number",
+      initialValue: 0,
+    }),
+    defineField({
       name: "userBackground",
       title: "User background",
       type: "markdown",
@@ -288,6 +392,47 @@ export const caseStudy = defineType({
       name: "improvements",
       title: "What could be improved",
       type: "markdown",
+    }),
+    defineField({
+      name: "prerequisites",
+      title: "Prerequisites",
+      type: "array",
+      of: [{ type: "string" }],
+    }),
+    defineField({
+      name: "acceptance",
+      title: "Acceptance checklist",
+      type: "markdown",
+    }),
+    defineField({
+      name: "deliverables",
+      title: "Deliverables",
+      type: "array",
+      of: [{ type: "string" }],
+    }),
+    defineField({ name: "safety", title: "Safety notes", type: "markdown" }),
+    defineField({
+      name: "limitations",
+      title: "Known limitations",
+      type: "markdown",
+    }),
+    defineField({
+      name: "relatedRecipes",
+      title: "Related recipes",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "recipe" }] }],
+    }),
+    defineField({
+      name: "relatedGuides",
+      title: "Related guides",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "guide" }] }],
+    }),
+    defineField({
+      name: "relatedUseCases",
+      title: "Related use cases",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "useCase" }] }],
     }),
     ...taxonomy,
   ],

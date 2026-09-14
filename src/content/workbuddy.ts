@@ -30,6 +30,9 @@ export type HubItem = {
   sourceUrl?: string;
   sourceName?: string;
   sourceKind?: "official" | "community" | "editorial";
+  sourceLicense?: string;
+  sourceRepository?: string;
+  sourcePath?: string;
   creator?: string;
   verificationNote?: string;
   updatedAt?: string;
@@ -56,6 +59,32 @@ export type HubItem = {
   quickStart?: string;
   prompts?: string[];
   advanced?: string;
+  caseType?: "real" | "tutorial" | "story";
+  dataNature?: "real" | "anonymized" | "synthetic" | "not-applicable";
+  contentOrigin?: "original" | "imported" | "community" | "editorial";
+  verificationStatus?:
+    | "imported"
+    | "edited"
+    | "verified"
+    | "community_verified"
+    | "outdated";
+  verifiedAt?: string;
+  prerequisites?: string[];
+  acceptance?: string;
+  deliverables?: string[];
+  safety?: string;
+  limitations?: string;
+  relatedRecipes?: HubRelation[];
+  relatedGuides?: HubRelation[];
+  relatedUseCases?: HubRelation[];
+};
+
+export type HubRelation = {
+  slug: string;
+  title: string;
+  description?: string;
+  difficulty?: HubItem["difficulty"];
+  icon?: HubIcon;
 };
 
 export const categoryDefinitions = [
@@ -424,6 +453,163 @@ export const guides: HubItem[] = [
 
 export const cases: HubItem[] = [
   {
+    slug: "tea-shop-sales-analysis",
+    title: "用 WorkBuddy 清洗 119 份 Excel 并生成运营看板",
+    description:
+      "一套可完整复现的数据清洗练习：合并多门店表格、检查异常、统一口径并生成分析看板。",
+    icon: "sheet",
+    category: "教学实操",
+    difficulty: "中级",
+    feature: ["项目", "技能", "表格"],
+    time: "45 分钟",
+    score: 98,
+    caseType: "tutorial",
+    dataNature: "synthetic",
+    contentOrigin: "imported",
+    verificationStatus: "edited",
+    sourceUrl:
+      "https://workbuddy.homes/cases/submissions/tea-shop-sales-analysis/",
+    sourceName: "WorkBuddy Guide 社区案例",
+    sourceKind: "community",
+    sourceLicense: "MIT",
+    sourceRepository: "https://github.com/AlephAITech/WorkBuddyGuide",
+    sourcePath: "docs/cases/submissions/tea-shop-sales-analysis/index.md",
+    updatedAt: "2026-09-14T00:00:00.000Z",
+    userBackground:
+      "本案例以虚构茶饮品牌“茗悦茶舍”的教学数据为背景。119 份 Excel 文件模拟多门店、多日期的销售明细，适合练习真实工作中常见的批量表格治理。",
+    previousWorkflow:
+      "人工逐个打开文件、复制粘贴到总表，再手工统一列名和日期格式。文件数量增加后，重复数据、空值和口径不一致很难被及时发现。",
+    painPoints:
+      "- 文件数量多，人工合并容易漏文件或重复导入。\n- 不同门店的字段、日期和金额格式不一致。\n- 清洗结果若没有日志和验收清单，很难证明数据可靠。",
+    solution:
+      "把原始文件放进独立项目目录，让 WorkBuddy 先只读盘点，再生成清洗规则和执行预览。确认后批量合并，最后输出汇总表、异常清单、处理日志与运营看板。",
+    process:
+      "1. 复制原始文件到独立工作目录，保留一份不可修改的备份。\n2. 要求 WorkBuddy 只读扫描文件数量、表头、Sheet、行数和字段类型。\n3. 根据扫描结果确认统一字段、日期格式、金额单位、去重主键和空值处理规则。\n4. 先用 3—5 个样本文件试跑，输出变更预览和异常项。\n5. 确认规则后处理全部文件，同时保存脚本或公式、处理日志和失败文件列表。\n6. 对关键指标抽样复算，再生成门店、日期和商品维度的运营看板。",
+    prompt:
+      "你将处理【原始数据目录】中的 Excel 文件。先只读扫描，不要修改任何文件。请输出：文件数、Sheet 数、每个文件的行列数、字段差异、日期/金额格式差异、空值、重复值和异常值。然后提出统一口径、去重主键、异常处理方式和验收清单，等我确认后再执行。执行时把结果、异常清单、处理日志和可复用脚本保存到【输出目录】，不得覆盖原文件。",
+    result:
+      "参考案例将 119 份文件中的 186,308 行原始记录整理为 182,500 行有效数据，并生成 8 个分析 Sheet、165 个公式及运营看板。数字来自教学案例，不代表真实企业项目。",
+    improvements:
+      "可进一步把字段映射、抽样复算和失败重试封装成固定配方；真实业务数据还应增加权限、脱敏、版本和审计要求。",
+    prerequisites: [
+      "119 份或一组同结构 Excel",
+      "独立工作目录",
+      "明确的统计口径",
+    ],
+    deliverables: ["清洗后的汇总表", "异常清单", "处理日志", "运营看板"],
+    acceptance:
+      "- 原文件未被覆盖。\n- 输入文件与处理日志数量一致。\n- 关键字段格式统一，重复与空值处理有记录。\n- 汇总行数能够解释，关键指标完成抽样复算。\n- 看板数字可追溯到清洗后的明细表。",
+    safety:
+      "真实数据必须先脱敏，并限制 WorkBuddy 只在指定目录内工作；任何覆盖、删除或外发动作都需要人工确认。",
+    limitations:
+      "这是教学模拟数据。实际企业表格可能包含更复杂的权限、公式、合并单元格和历史口径，不能直接套用结果数字。",
+    verificationNote:
+      "本站已核对来源结构并做可执行化整理；当前状态为编辑完成，尚未以相同数据包独立复现，因此不标记为“本站已验证”。",
+    relatedRecipes: [
+      {
+        slug: "excel-analysis",
+        title: "Excel 数据分析",
+        description: "从表格盘点、清洗到可视化的通用配方。",
+        difficulty: "初级",
+        icon: "sheet",
+      },
+    ],
+    relatedGuides: [
+      {
+        slug: "prompt-best-practices",
+        title: "WorkBuddy Prompt 最佳实践",
+        difficulty: "初级",
+        icon: "pen",
+      },
+    ],
+    relatedUseCases: [
+      {
+        slug: "excel",
+        title: "WorkBuddy 分析 Excel",
+        difficulty: "初级",
+        icon: "sheet",
+      },
+    ],
+  },
+  {
+    slug: "daily-ai-news",
+    title: "用 WorkBuddy 生成带来源的每日 AI 资讯简报",
+    description:
+      "从一次可靠的手动检索开始，建立可追溯、可去重、可逐步自动化的每日资讯工作流。",
+    icon: "mail",
+    category: "教学实操",
+    difficulty: "入门",
+    feature: ["技能", "自动化", "Web"],
+    time: "20 分钟",
+    score: 96,
+    caseType: "tutorial",
+    dataNature: "not-applicable",
+    contentOrigin: "imported",
+    verificationStatus: "edited",
+    sourceUrl: "https://workbuddy.homes/cases/submissions/daily-ai-news/",
+    sourceName: "WorkBuddy Guide 社区案例",
+    sourceKind: "community",
+    sourceLicense: "MIT",
+    sourceRepository: "https://github.com/AlephAITech/WorkBuddyGuide",
+    sourcePath: "docs/cases/submissions/daily-ai-news/index.md",
+    updatedAt: "2026-09-14T00:00:00.000Z",
+    userBackground:
+      "适合需要每天跟踪 AI 产品、模型发布和行业动态的研究、产品与内容从业者。参考来源是一篇带完整步骤的社区示例。",
+    previousWorkflow:
+      "每天重复打开多个网站和社交平台，手工筛选与复制链接；相同事件容易重复，摘要也常常缺少发布时间和原始出处。",
+    painPoints:
+      "信息源分散、重复度高、时效性强。如果一开始就做无人值守自动化，失效链接、低质量来源和空结果会被直接放大。",
+    solution:
+      "先安装并测试资讯检索技能，用固定时间范围和来源字段生成单次简报；人工确认质量稳定后，再配置低频自动化和异常提示。",
+    process:
+      "1. 明确主题、时间范围、语言和优先来源。\n2. 先运行最近 7 天查询，观察来源质量与重复情况。\n3. 再运行过去 24 小时版本，固定摘要、链接、发布时间与关注理由字段。\n4. 检查重复事件、失效链接和无法核验的信息。\n5. 单次运行稳定后再创建自动化，并保留失败和零结果状态。",
+    prompt:
+      "汇总过去 24 小时【主题】的重要资讯。优先发布方官网、论文或产品公告；合并描述同一事件的重复报道。每条包含：标题、两句摘要、来源、发布时间、原始链接、为什么值得关注。把推断和无法确认的信息单独列出。先生成一次供我确认，不要自动发送。",
+    result:
+      "得到一份按重要性排序、每条都有原始链接和时间信息的简报，并明确列出重复、失效或待核验内容。自动发送属于后续增强，不是本案例已证明的结果。",
+    improvements:
+      "稳定后可以增加关注主题、可信来源白名单、重复事件指纹和每周复盘，但仍应定期抽查来源质量。",
+    prerequisites: [
+      "可用的网页检索或资讯技能",
+      "主题与来源范围",
+      "简报保存位置",
+    ],
+    deliverables: ["每日资讯简报", "来源链接清单", "异常与待核验项"],
+    acceptance:
+      "- 每条信息都有可打开的原始链接与发布时间。\n- 相同事件已合并。\n- 事实、推断和待核验项明确区分。\n- 无结果或来源失败时显示状态，不生成看似完整的空洞简报。",
+    safety:
+      "在单次运行尚未稳定前不要自动对外发送；任何邮箱、群聊或文档写入都应使用最小权限并保留人工确认。",
+    limitations:
+      "来源是一篇社区示例，展示了技能安装和单次检索；持续无人值守自动化需要另行配置并验证。",
+    verificationNote:
+      "本站依据社区示例重组为站内实践教程，并明确保留单次运行与自动化之间的证据边界。",
+    relatedRecipes: [
+      {
+        slug: "ai-daily-news-brief",
+        title: "自动生成每日 AI 新闻简报",
+        description: "把稳定的单次查询升级为可观察的定时任务。",
+        difficulty: "入门",
+        icon: "mail",
+      },
+    ],
+    relatedGuides: [
+      {
+        slug: "automation-principles",
+        title: "自动化任务设计原则",
+        difficulty: "中级",
+        icon: "timer",
+      },
+    ],
+    relatedUseCases: [
+      {
+        slug: "daily-briefing",
+        title: "WorkBuddy 每日简报",
+        difficulty: "初级",
+        icon: "mail",
+      },
+    ],
+  },
+  {
     slug: "competitor-analysis-pm-process",
     title: "捷顺科技：把 WorkBuddy 推广到 15 个部门",
     description: "腾讯云官方产品页公开的跨部门推广反馈与可复用落地方法。",
@@ -432,6 +618,18 @@ export const cases: HubItem[] = [
     difficulty: "中级",
     feature: ["项目", "专家", "技能"],
     score: 92,
+    caseType: "story",
+    dataNature: "not-applicable",
+    contentOrigin: "editorial",
+    verificationStatus: "edited",
+    relatedRecipes: [
+      {
+        slug: "competitor-analysis",
+        title: "自动竞品分析",
+        difficulty: "中级",
+        icon: "search",
+      },
+    ],
     sourceUrl: "https://cloud.tencent.com/product/workbuddy",
     sourceName: "腾讯云 WorkBuddy 官方产品页",
     sourceKind: "official",
@@ -452,6 +650,24 @@ export const cases: HubItem[] = [
     difficulty: "中级",
     feature: ["项目", "技能", "专家"],
     score: 94,
+    caseType: "story",
+    dataNature: "not-applicable",
+    contentOrigin: "editorial",
+    verificationStatus: "edited",
+    relatedRecipes: [
+      {
+        slug: "ppt-from-brief",
+        title: "自动制作 PPT",
+        difficulty: "初级",
+        icon: "presentation",
+      },
+      {
+        slug: "excel-analysis",
+        title: "Excel 数据分析",
+        difficulty: "初级",
+        icon: "sheet",
+      },
+    ],
     sourceUrl: "https://cloud.tencent.com/product/workbuddy",
     sourceName: "腾讯云 WorkBuddy 官方产品页",
     sourceKind: "official",
@@ -471,6 +687,18 @@ export const cases: HubItem[] = [
     difficulty: "初级",
     feature: ["助手", "连接器"],
     score: 88,
+    caseType: "story",
+    dataNature: "not-applicable",
+    contentOrigin: "editorial",
+    verificationStatus: "edited",
+    relatedRecipes: [
+      {
+        slug: "weekly-report",
+        title: "自动生成周报",
+        difficulty: "入门",
+        icon: "file",
+      },
+    ],
     sourceUrl: "https://cloud.tencent.com/product/workbuddy",
     sourceName: "腾讯云 WorkBuddy 官方产品页",
     sourceKind: "official",
@@ -488,6 +716,18 @@ export const cases: HubItem[] = [
     difficulty: "高级",
     feature: ["项目", "专家", "技能"],
     score: 90,
+    caseType: "story",
+    dataNature: "not-applicable",
+    contentOrigin: "editorial",
+    verificationStatus: "edited",
+    relatedRecipes: [
+      {
+        slug: "github-pr-review",
+        title: "GitHub PR Review",
+        difficulty: "中级",
+        icon: "code",
+      },
+    ],
     sourceUrl: "https://cloud.tencent.com/product/workbuddy",
     sourceName: "腾讯云 WorkBuddy 官方产品页",
     sourceKind: "official",

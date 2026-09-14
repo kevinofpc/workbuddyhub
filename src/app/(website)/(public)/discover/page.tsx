@@ -1,11 +1,17 @@
 import { HubSearch } from "@/components/hub/hub-search";
 import { HubIconView } from "@/components/hub/hub-ui";
-import { getResources } from "@/data/hub";
+import {
+  getCases,
+  getGuides,
+  getRecipes,
+  getResources,
+  getUseCases,
+} from "@/data/hub";
 import { constructMetadata } from "@/lib/metadata";
 import { Bookmark, Eye, SlidersHorizontal, Star, X } from "lucide-react";
 import Link from "next/link";
 
-export const metadata = constructMetadata({ title: "精选资源" });
+export const metadata = constructMetadata({ title: "全站搜索" });
 
 export default async function DiscoverPage({
   searchParams,
@@ -17,12 +23,33 @@ export default async function DiscoverPage({
     language?: string;
   };
 }) {
-  const resources = await getResources();
+  const [recipes, cases, useCases, guides, resources] = await Promise.all([
+    getRecipes(),
+    getCases(),
+    getUseCases(),
+    getGuides(),
+    getResources(),
+  ]);
   const query = (searchParams?.q || "").toLowerCase();
   const selectedType = searchParams?.type || "";
   const selectedDifficulty = searchParams?.difficulty || "";
   const selectedLanguage = searchParams?.language || "";
-  const filtered = resources.filter((item) => {
+  const searchable = [
+    ...recipes.map((item) => ({ item, prefix: "recipes", typeLabel: "配方" })),
+    ...cases.map((item) => ({ item, prefix: "cases", typeLabel: "案例" })),
+    ...useCases.map((item) => ({
+      item,
+      prefix: "use-cases",
+      typeLabel: "使用场景",
+    })),
+    ...guides.map((item) => ({ item, prefix: "guides", typeLabel: "指南" })),
+    ...resources.map((item) => ({
+      item,
+      prefix: "resources",
+      typeLabel: "资源",
+    })),
+  ];
+  const filtered = searchable.filter(({ item, typeLabel }) => {
     const matchesQuery = query
       ? [item.title, item.description, item.category, ...item.feature]
           .join(" ")
@@ -30,7 +57,7 @@ export default async function DiscoverPage({
           .includes(query)
       : true;
     const matchesType = selectedType
-      ? item.category.includes(selectedType)
+      ? typeLabel.includes(selectedType) || item.category.includes(selectedType)
       : true;
     const matchesDifficulty = selectedDifficulty
       ? item.difficulty === selectedDifficulty
@@ -86,7 +113,11 @@ export default async function DiscoverPage({
               </Link>
             </div>
             {[
-              ["类型", "type", ["视频", "文档", "课程", "文章"]],
+              [
+                "类型",
+                "type",
+                ["案例", "配方", "指南", "使用场景", "教程", "视频"],
+              ],
               ["难度", "difficulty", ["入门", "初级", "中级", "高级"]],
               ["语言", "language", ["中文", "英文", "双语"]],
             ].map(([title, key, options]) => {
@@ -126,10 +157,10 @@ export default async function DiscoverPage({
         <div className="min-w-0">
           <p className="hub-kicker">Discover</p>
           <h1 className="mt-2 text-4xl font-black tracking-[-0.045em] text-slate-950">
-            精选资源
+            全站搜索
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            发现高质量的 WorkBuddy 教程、视频、文章与课程。
+            按你想完成的任务，查找站内案例、配方、指南、使用场景与精选资源。
           </p>
           <div className="mt-6">
             <HubSearch compact initialValue={searchParams?.q || ""} />
@@ -150,49 +181,53 @@ export default async function DiscoverPage({
               </Link>
             ))}
           </div>
-          <section className="mt-7 rounded-2xl border border-amber-200 bg-amber-50/35 p-4">
-            <div className="flex items-center gap-2 text-sm font-black text-slate-900">
-              <Star className="size-4 fill-amber-400 text-amber-400" />
-              编辑精选
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {resources.slice(0, 2).map((item) => (
-                <Link
-                  href={`/resources/${item.slug}`}
-                  key={item.slug}
-                  className="rounded-xl border border-amber-100 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
-                      <HubIconView name={item.icon} className="size-5" />
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="truncate text-sm font-bold text-slate-900">
-                        {item.title}
-                      </h3>
-                      <p className="mt-1 truncate text-xs text-slate-500">
-                        {item.description}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center gap-4 text-[11px] text-slate-400">
-                    <span className="text-amber-600">
-                      编辑评分 {item.score || "—"}/100
-                    </span>
-                    {item.views ? (
-                      <span>
-                        <Eye className="mr-1 inline size-3" />
-                        {item.views}
+          {!query ? (
+            <section className="mt-7 rounded-2xl border border-amber-200 bg-amber-50/35 p-4">
+              <div className="flex items-center gap-2 text-sm font-black text-slate-900">
+                <Star className="size-4 fill-amber-400 text-amber-400" />
+                编辑精选
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {resources.slice(0, 2).map((item) => (
+                  <Link
+                    href={`/resources/${item.slug}`}
+                    key={item.slug}
+                    className="rounded-xl border border-amber-100 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
+                        <HubIconView name={item.icon} className="size-5" />
                       </span>
-                    ) : null}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-bold text-slate-900">
+                          {item.title}
+                        </h3>
+                        <p className="mt-1 truncate text-xs text-slate-500">
+                          {item.description}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-4 text-[11px] text-slate-400">
+                      <span className="text-amber-600">
+                        {item.score
+                          ? `编辑评分 ${item.score}/100`
+                          : "站内完整内容"}
+                      </span>
+                      {item.views ? (
+                        <span>
+                          <Eye className="mr-1 inline size-3" />
+                          {item.views}
+                        </span>
+                      ) : null}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : null}
           <div className="mt-8 flex items-center justify-between">
             <h2 className="text-lg font-black text-slate-950">
-              {query ? `“${searchParams?.q}” 的结果` : "全部资源"}{" "}
+              {query ? `“${searchParams?.q}” 的站内结果` : "全部内容"}{" "}
               <span className="ml-1 text-xs font-normal text-slate-400">
                 共 {filtered.length} 条
               </span>
@@ -206,10 +241,10 @@ export default async function DiscoverPage({
           </div>
           <div className="mt-4 space-y-3">
             {filtered.length ? (
-              filtered.map((item) => (
+              filtered.map(({ item, prefix, typeLabel }) => (
                 <Link
-                  key={item.slug}
-                  href={`/resources/${item.slug}`}
+                  key={`${prefix}-${item.slug}`}
+                  href={`/${prefix}/${item.slug}`}
                   className="group flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-emerald-200 hover:shadow-[0_12px_30px_rgba(16,185,129,.07)]"
                 >
                   <span className="grid size-20 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-50 to-slate-50 text-emerald-600 sm:size-24">
@@ -217,6 +252,9 @@ export default async function DiscoverPage({
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex gap-2">
+                      <span className="rounded bg-slate-900 px-2 py-1 text-[10px] font-bold text-white">
+                        {typeLabel}
+                      </span>
                       <span className="rounded bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
                         {item.category}
                       </span>
@@ -232,7 +270,9 @@ export default async function DiscoverPage({
                     </p>
                     <div className="mt-3 flex items-center gap-4 text-[11px] text-slate-400">
                       <span className="text-amber-600">
-                        编辑评分 {item.score || "—"}/100
+                        {item.score
+                          ? `编辑评分 ${item.score}/100`
+                          : "站内完整内容"}
                       </span>
                       {item.views ? (
                         <span>

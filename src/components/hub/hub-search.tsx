@@ -34,7 +34,7 @@ export function HubSearch({
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="我想用 WorkBuddy 做什么？"
-        aria-label="搜索 WorkBuddy 教程、配方和资源"
+        aria-label="搜索 WorkBuddy 案例、配方、指南和资源"
         className="min-w-0 flex-1 bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 md:text-base"
       />
       <button

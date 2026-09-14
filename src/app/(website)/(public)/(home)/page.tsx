@@ -198,13 +198,13 @@ export default async function HomePage() {
 
         <section>
           <SectionHeading
-            eyebrow="Real-world cases"
-            title="真实工作里，他们这样使用"
-            description="不讲抽象功能，只看原来的痛点、完整流程和最终效果。"
+            eyebrow="Cases · 站内完整阅读"
+            title="从真实问题，到可以复现的方法"
+            description="案例在本站讲清背景、过程、Prompt、结果与限制，并连接到对应的实战配方。"
             href="/cases"
           />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {cases.map((item, index) => (
+            {cases.slice(0, 4).map((item, index) => (
               <Link
                 key={item.slug}
                 href={`/cases/${item.slug}`}
@@ -230,7 +230,12 @@ export default async function HomePage() {
                     {item.description}
                   </p>
                   <p className="mt-4 text-xs font-semibold text-emerald-600">
-                    公开来源 · 编辑评分 {item.score || "—"}/100
+                    {item.caseType === "tutorial"
+                      ? "教学实操"
+                      : item.caseType === "real"
+                        ? "真实实践"
+                        : "公开应用故事"}
+                    {item.dataNature === "synthetic" ? " · 模拟数据" : ""}
                   </p>
                 </div>
               </Link>

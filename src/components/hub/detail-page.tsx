@@ -2,6 +2,7 @@ import { isContentSaved } from "@/actions/save-content";
 import { ContentActions } from "@/components/hub/content-actions";
 import { HubIconView, RecipeRow } from "@/components/hub/hub-ui";
 import ItemCustomMdx from "@/components/item/item-custom-mdx";
+import { CopyButton } from "@/components/shared/copy-button";
 import type { HubItem } from "@/content/workbuddy";
 import { getGuides, getRecipes } from "@/data/hub";
 import {
@@ -30,6 +31,27 @@ const sourceLabels = {
   editorial: "编辑整理",
 };
 
+const caseTypeLabels = {
+  real: "真实实践",
+  tutorial: "教学实操",
+  story: "公开应用故事",
+};
+
+const dataNatureLabels = {
+  real: "真实数据",
+  anonymized: "脱敏数据",
+  synthetic: "模拟数据",
+  "not-applicable": "不涉及数据集",
+};
+
+const verificationLabels = {
+  imported: "来源已导入",
+  edited: "Hub 已编辑",
+  verified: "Hub 已复现",
+  community_verified: "社区已复现",
+  outdated: "可能已过期",
+};
+
 type ContentSection = {
   title: string;
   body?: string;
@@ -44,7 +66,14 @@ function buildContentSections(item: HubItem, type: string): ContentSection[] {
       { title: "核心痛点", body: item.painPoints, tone: "warning" },
       { title: "WorkBuddy 的用法", body: item.solution },
       { title: "完整实践流程", body: item.process },
+      {
+        title: "完成标准",
+        body: item.acceptance,
+        tone: "success",
+      },
       { title: "公开实践结果", body: item.result, tone: "success" },
+      { title: "安全与边界", body: item.safety, tone: "warning" },
+      { title: "已知限制", body: item.limitations, tone: "warning" },
       { title: "复用与改进", body: item.improvements },
     ];
     return sections.filter((section) => section.body);
@@ -55,6 +84,8 @@ function buildContentSections(item: HubItem, type: string): ContentSection[] {
       { title: "完整实施步骤", body: item.steps },
       { title: "执行注意事项", body: item.notes, tone: "warning" },
       { title: "预期结果", body: item.exampleResult, tone: "success" },
+      { title: "完成标准", body: item.acceptance, tone: "success" },
+      { title: "安全提示", body: item.safety, tone: "warning" },
     ];
     return sections.filter((section) => section.body);
   }
@@ -98,21 +129,66 @@ export async function HubDetailPage({
   const sourceLabel = item.sourceKind
     ? sourceLabels[item.sourceKind]
     : "编辑精选";
+  const relatedRecipeItems = item.relatedRecipes?.length
+    ? item.relatedRecipes
+        .map((relation) =>
+          recipeItems.find((candidate) => candidate.slug === relation.slug),
+        )
+        .filter((candidate): candidate is HubItem => Boolean(candidate))
+    : type === "cases"
+      ? []
+      : recipeItems
+          .filter((candidate) =>
+            candidate.feature.some((feature) => item.feature.includes(feature)),
+          )
+          .slice(0, 2);
+  const relatedGuideItems = item.relatedGuides?.length
+    ? item.relatedGuides
+        .map((relation) =>
+          guideItems.find((candidate) => candidate.slug === relation.slug),
+        )
+        .filter((candidate): candidate is HubItem => Boolean(candidate))
+    : type === "cases"
+      ? []
+      : guideItems
+          .filter((candidate) =>
+            candidate.feature.some((feature) => item.feature.includes(feature)),
+          )
+          .slice(0, 2);
+  const practiceHref = relatedRecipeItems[0]
+    ? `/recipes/${relatedRecipeItems[0].slug}`
+    : item.relatedUseCases?.[0]
+      ? `/use-cases/${item.relatedUseCases[0].slug}`
+      : "/start";
+  const verificationLabel = item.verificationStatus
+    ? verificationLabels[item.verificationStatus]
+    : item.verificationNote
+      ? "编辑已核对"
+      : "待核对";
   const overview = [
     {
       icon: Target,
-      title: "目标",
-      text: item.goal || "理解方法并完成一个可检查的实际任务",
+      title: type === "cases" ? "这次要解决" : "目标",
+      text:
+        item.goal ||
+        (type === "cases" ? item.description : undefined) ||
+        "理解方法并完成一个可检查的实际任务",
     },
     {
       icon: UsersRound,
       title: "适合谁",
-      text: item.audience?.join("、") || "希望系统使用 WorkBuddy 的知识工作者",
+      text:
+        item.audience?.join("、") ||
+        (type === "cases" ? item.userBackground : undefined) ||
+        "希望系统使用 WorkBuddy 的知识工作者",
     },
     {
       icon: Sparkles,
       title: "最终输出",
-      text: item.outputs?.join("、") || "可复用、可核验的工作成果",
+      text:
+        item.outputs?.join("、") ||
+        item.deliverables?.join("、") ||
+        "可复用、可核验的工作成果",
     },
   ];
 
@@ -146,6 +222,16 @@ export async function HubDetailPage({
                     <span className="flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
                       <ShieldCheck className="size-3" /> {sourceLabel}
                     </span>
+                    {type === "cases" && item.caseType ? (
+                      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                        {caseTypeLabels[item.caseType]}
+                      </span>
+                    ) : null}
+                    {type === "cases" && item.dataNature ? (
+                      <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
+                        {dataNatureLabels[item.dataNature]}
+                      </span>
+                    ) : null}
                     {item.time ? (
                       <span className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
                         <Clock3 className="size-3" /> {item.time}
@@ -224,9 +310,51 @@ export async function HubDetailPage({
               ))}
             </section>
 
-            {contentSections.map((section) => (
+            {type === "cases" &&
+            (item.prerequisites?.length || item.deliverables?.length) ? (
+              <section
+                id="practice-kit"
+                className="hub-panel grid gap-0 overflow-hidden sm:grid-cols-2 sm:divide-x sm:divide-slate-100"
+              >
+                <div className="p-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600">
+                    Before you start
+                  </p>
+                  <h2 className="mt-2 text-lg font-black text-slate-950">
+                    开始前准备
+                  </h2>
+                  <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+                    {(item.prerequisites || []).map((value) => (
+                      <li key={value} className="flex gap-2">
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-emerald-500" />
+                        {value}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="border-t border-slate-100 p-6 sm:border-t-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-600">
+                    What you will get
+                  </p>
+                  <h2 className="mt-2 text-lg font-black text-slate-950">
+                    最终交付物
+                  </h2>
+                  <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+                    {(item.deliverables || []).map((value) => (
+                      <li key={value} className="flex gap-2">
+                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-sky-500" />
+                        {value}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            ) : null}
+
+            {contentSections.map((section, index) => (
               <section
                 key={section.title}
+                id={`section-${index + 1}`}
                 className={`hub-panel p-6 sm:p-7 ${panelTone(section.tone)}`}
               >
                 <h2 className="text-lg font-black text-slate-950">
@@ -239,10 +367,21 @@ export async function HubDetailPage({
             ))}
 
             {prompt ? (
-              <section className="hub-panel p-6">
-                <h2 className="text-lg font-black text-slate-950">
-                  Prompt / 配置片段
-                </h2>
+              <section id="prompt" className="hub-panel p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-600">
+                      Ready to use
+                    </p>
+                    <h2 className="mt-1 text-lg font-black text-slate-950">
+                      可直接使用的 Prompt
+                    </h2>
+                  </div>
+                  <CopyButton
+                    value={prompt}
+                    className="size-9 border-emerald-200 bg-emerald-500 text-white hover:bg-emerald-600 hover:text-white"
+                  />
+                </div>
                 <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/35 p-4 text-sm leading-7 text-slate-700">
                   <ItemCustomMdx source={prompt} />
                 </div>
@@ -260,21 +399,16 @@ export async function HubDetailPage({
               </section>
             ) : null}
 
-            <section className="pt-3">
-              <h2 className="mb-4 text-lg font-black text-slate-950">
-                相关配方与指南
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {recipeItems
-                  .filter((recipe) => recipe.slug !== item.slug)
-                  .slice(0, 2)
-                  .map((recipe) => (
+            {relatedRecipeItems.length || relatedGuideItems.length ? (
+              <section id="related" className="pt-3">
+                <h2 className="mb-4 text-lg font-black text-slate-950">
+                  相关配方与指南
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {relatedRecipeItems.map((recipe) => (
                     <RecipeRow key={recipe.slug} item={recipe} />
                   ))}
-                {guideItems
-                  .filter((guide) => guide.slug !== item.slug)
-                  .slice(0, 2)
-                  .map((guide) => (
+                  {relatedGuideItems.map((guide) => (
                     <Link
                       key={guide.slug}
                       href={`/guides/${guide.slug}`}
@@ -284,8 +418,9 @@ export async function HubDetailPage({
                       <ArrowRight className="size-4 text-slate-300 group-hover:text-emerald-600" />
                     </Link>
                   ))}
-              </div>
-            </section>
+                </div>
+              </section>
+            ) : null}
           </main>
 
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
@@ -310,32 +445,54 @@ export async function HubDetailPage({
                     {item.sourceName || sourceLabel}
                   </dd>
                 </div>
+                {item.sourceLicense ? (
+                  <div>
+                    <dt className="text-slate-400">来源许可</dt>
+                    <dd className="mt-1 font-semibold text-slate-700">
+                      {item.sourceLicense}
+                    </dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt className="text-slate-400">最后核验</dt>
                   <dd className="mt-1 font-semibold text-slate-700">
-                    {item.updatedAt?.slice(0, 10) || "待核验"}
+                    {item.verifiedAt?.slice(0, 10) || "尚未独立复现"}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-slate-400">内容状态</dt>
                   <dd className="mt-1 font-semibold text-emerald-600">
-                    {item.sourceUrl ? "✓ 来源已核验" : "编辑精选"}
+                    {verificationLabel}
                   </dd>
                 </div>
               </dl>
               <Link
-                href={item.sourceUrl || "/start"}
-                target={item.sourceUrl ? "_blank" : undefined}
-                rel={item.sourceUrl ? "noopener noreferrer" : undefined}
+                href={isResource ? item.sourceUrl || "/start" : practiceHref}
+                target={isResource && item.sourceUrl ? "_blank" : undefined}
+                rel={
+                  isResource && item.sourceUrl
+                    ? "noopener noreferrer"
+                    : undefined
+                }
                 className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-600"
               >
-                {item.sourceUrl ? "查看原始来源" : "开始实践"}
-                {item.sourceUrl ? (
+                {isResource ? "访问原始资源" : "按这篇内容开始实践"}
+                {isResource && item.sourceUrl ? (
                   <ExternalLink className="size-4" />
                 ) : (
                   <ArrowRight className="size-4" />
                 )}
               </Link>
+              {!isResource && item.sourceUrl ? (
+                <Link
+                  href={item.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-400 transition hover:text-slate-700"
+                >
+                  查看参考来源 <ExternalLink className="size-3" />
+                </Link>
+              ) : null}
             </div>
             <div className="hub-panel p-5">
               <h2 className="text-sm font-black text-slate-900">本页内容</h2>
@@ -345,11 +502,20 @@ export async function HubDetailPage({
                 </li>
                 {contentSections.map((section, index) => (
                   <li key={section.title}>
-                    {index + 2}. {section.title}
+                    <a
+                      href={`#section-${index + 1}`}
+                      className="hover:text-emerald-600"
+                    >
+                      {index + 2}. {section.title}
+                    </a>
                   </li>
                 ))}
                 {prompt ? (
-                  <li>{contentSections.length + 2}. Prompt 示例</li>
+                  <li>
+                    <a href="#prompt" className="hover:text-emerald-600">
+                      {contentSections.length + 2}. Prompt 示例
+                    </a>
+                  </li>
                 ) : null}
               </ol>
             </div>

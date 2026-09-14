@@ -18,6 +18,7 @@ type HubDocument = {
   features?: string[];
   setupTime?: number;
   readingTime?: number;
+  estimatedTime?: number;
   duration?: string;
   icon?: string;
   score?: number;
@@ -26,6 +27,9 @@ type HubDocument = {
   sourceUrl?: string;
   sourceName?: string;
   sourceKind?: "official" | "community" | "editorial";
+  sourceLicense?: string;
+  sourceRepository?: string;
+  sourcePath?: string;
   verificationNote?: string;
   updatedAt?: string;
   language?: string;
@@ -51,6 +55,19 @@ type HubDocument = {
   quickStart?: string;
   prompts?: string[];
   advanced?: string;
+  caseType?: HubItem["caseType"];
+  dataNature?: HubItem["dataNature"];
+  contentOrigin?: HubItem["contentOrigin"];
+  verificationStatus?: HubItem["verificationStatus"];
+  verifiedAt?: string;
+  prerequisites?: string[];
+  acceptance?: string;
+  deliverables?: string[];
+  safety?: string;
+  limitations?: string;
+  relatedRecipes?: HubItem["relatedRecipes"];
+  relatedGuides?: HubItem["relatedGuides"];
+  relatedUseCases?: HubItem["relatedUseCases"];
 };
 
 const icons = new Set<HubIcon>([
@@ -112,7 +129,8 @@ function normalize(
   fallbackIcon: HubIcon,
 ): HubItem | null {
   if (!document.slug || !document.title) return null;
-  const minutes = document.setupTime || document.readingTime;
+  const minutes =
+    document.setupTime || document.readingTime || document.estimatedTime;
   return {
     slug: document.slug,
     title: document.title,
@@ -129,6 +147,9 @@ function normalize(
     sourceUrl: document.sourceUrl,
     sourceName: document.sourceName,
     sourceKind: document.sourceKind,
+    sourceLicense: document.sourceLicense,
+    sourceRepository: document.sourceRepository,
+    sourcePath: document.sourcePath,
     verificationNote: document.verificationNote,
     updatedAt: document.updatedAt,
     language: normalizeLanguage(document.language),
@@ -159,6 +180,19 @@ function normalize(
     quickStart: document.quickStart,
     prompts: document.prompts?.filter(Boolean),
     advanced: document.advanced,
+    caseType: document.caseType,
+    dataNature: document.dataNature,
+    contentOrigin: document.contentOrigin,
+    verificationStatus: document.verificationStatus,
+    verifiedAt: document.verifiedAt,
+    prerequisites: document.prerequisites?.filter(Boolean),
+    acceptance: document.acceptance,
+    deliverables: document.deliverables?.filter(Boolean),
+    safety: document.safety,
+    limitations: document.limitations,
+    relatedRecipes: document.relatedRecipes,
+    relatedGuides: document.relatedGuides,
+    relatedUseCases: document.relatedUseCases,
   };
 }
 
@@ -199,7 +233,13 @@ const sharedProjection = `
   sourceUrl,
   sourceName,
   sourceKind,
+  sourceLicense,
+  sourceRepository,
+  sourcePath,
   verificationNote,
+  contentOrigin,
+  verificationStatus,
+  verifiedAt,
   "updatedAt": coalesce(sourceCheckedAt, updatedAt, _updatedAt),
   "imageUrl": coverImage.asset->url,
   "imageAlt": coverImage.alt
@@ -218,6 +258,9 @@ export function getRecipes() {
       prompt,
       notes,
       exampleResult,
+      acceptance,
+      deliverables,
+      safety,
       "category": coalesce(category, "实战配方")
     }`,
     fallbackRecipes,
@@ -241,7 +284,7 @@ export function getGuides() {
 
 export function getCases() {
   return fetchWithFallback(
-    `*[_type == "caseStudy" && status == "published"] | order(featured desc, _updatedAt desc) {
+    `*[_type == "caseStudy" && status == "published"] | order(coalesce(priority, 0) desc, featured desc, _updatedAt desc) {
       ${sharedProjection},
       userBackground,
       previousWorkflow,
@@ -251,6 +294,23 @@ export function getCases() {
       "prompt": keyPrompt,
       result,
       improvements,
+      caseType,
+      dataNature,
+      estimatedTime,
+      prerequisites,
+      acceptance,
+      deliverables,
+      safety,
+      limitations,
+      "relatedRecipes": relatedRecipes[]->{
+        "slug": slug.current, title, description, difficulty, icon
+      },
+      "relatedGuides": relatedGuides[]->{
+        "slug": slug.current, title, description, difficulty, icon
+      },
+      "relatedUseCases": relatedUseCases[]->{
+        "slug": slug.current, title, description, difficulty, icon
+      },
       "category": coalesce(category, "真实案例")
     }`,
     fallbackCases,
@@ -265,6 +325,15 @@ export function getUseCases() {
       quickStart,
       prompts,
       advanced,
+      "relatedRecipes": recipes[]->{
+        "slug": slug.current, title, description, difficulty, icon
+      },
+      "relatedGuides": guides[]->{
+        "slug": slug.current, title, description, difficulty, icon
+      },
+      "relatedUseCases": cases[]->{
+        "slug": slug.current, title, description, difficulty, icon
+      },
       "category": coalesce(category, "使用场景")
     }`,
     fallbackUseCases,

@@ -26,6 +26,7 @@
     "typegen": "sanity schema extract && sanity typegen generate",
     "seed:workbuddy": "tsx scripts/seed-workbuddy-hub.ts",
     "curate:workbuddy": "tsx scripts/curate-workbuddy-content.ts",
+    "sync:v3": "tsx scripts/sync-workbuddy-v3.ts",
     "audit:workbuddy": "tsx scripts/audit-workbuddy-content.ts",
     "email": "email dev --dir emails --port 3333",
     "export-user-emails": "tsx scripts/export-user-emails.ts",
