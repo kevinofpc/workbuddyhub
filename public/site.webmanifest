@@ -1,0 +1,16 @@
+{
+  "name": "WorkBuddy Hub",
+  "short_name": "WB Hub",
+  "description": "WorkBuddy 学习、案例与最佳实践中心",
+  "icons": [
+    {
+      "src": "/workbuddy-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#10b981",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "lang": "zh-CN"
+}

@@ -1,0 +1,109 @@
+import { format, parseISO } from "date-fns";
+import { defineField } from "sanity";
+
+const user = {
+  name: "user",
+  title: "User",
+  type: "document",
+  groups: [
+    {
+      name: "stripe",
+      title: "Stripe",
+    },
+  ],
+  fields: [
+    defineField({
+      name: "name",
+      title: "User Name",
+      type: "string",
+    }),
+    defineField({
+      name: "email",
+      title: "User Email",
+      type: "string",
+    }),
+    defineField({
+      name: "emailVerified",
+      title: "Email Verification",
+      type: "datetime",
+      readOnly: true,
+    }),
+    defineField({
+      name: "image",
+      title: "User Image",
+      type: "string",
+    }),
+    defineField({
+      name: "link",
+      title: "User Link",
+      type: "string",
+    }),
+    defineField({
+      name: "password",
+      title: "User Password",
+      type: "string",
+      hidden: true,
+      readOnly: true,
+    }),
+    defineField({
+      name: "role",
+      title: "Role",
+      type: "string",
+      initialValue: "USER",
+      options: {
+        list: ["ADMIN", "USER"],
+      },
+    }),
+    defineField({
+      name: "accounts",
+      title: "Accounts",
+      type: "reference",
+      to: [{ type: "account" }],
+    }),
+    defineField({
+      name: "savedContent",
+      title: "Saved WorkBuddy Hub Content",
+      type: "array",
+      of: [
+        {
+          name: "savedContent",
+          title: "Saved Content",
+          type: "object",
+          fields: [
+            { name: "slug", title: "Slug", type: "string" },
+            { name: "contentType", title: "Content Type", type: "string" },
+            { name: "title", title: "Title", type: "string" },
+            { name: "savedAt", title: "Saved At", type: "datetime" },
+          ],
+        },
+      ],
+    }),
+    // stripe
+    defineField({
+      name: "stripeCustomerId",
+      title: "Stripe Customer Id",
+      type: "string",
+      group: "stripe",
+      readOnly: true,
+    }),
+  ],
+  preview: {
+    select: {
+      id: "_id",
+      name: "name",
+      date: "_createdAt",
+    },
+    prepare({ id, name, date }) {
+      const title = name;
+      // get simple user id by concating the first 4 and last 4 characters
+      const userid = `${id.substring(5, 9)}...${id.substring(id.length - 4)}`;
+      const subtitle = `${format(parseISO(date), "yyyy/MM/dd")}-${userid}`;
+      return {
+        title,
+        subtitle,
+      };
+    },
+  },
+};
+
+export default user;
