@@ -8,6 +8,18 @@ export const metadata = constructMetadata({
   title: "Start Here - 10 分钟了解 WorkBuddy",
 });
 
+const learningStepHrefs = [
+  "/guides/complete-beginner-guide",
+  "/resources/beginner-video",
+  "/workbuddy-map#assistant",
+  "/workbuddy-map#project",
+  "/workbuddy-map#expert",
+  "/workbuddy-map#skill",
+  "/workbuddy-map#connector",
+  "/workbuddy-map#knowledge",
+  "/recipes/weekly-report",
+];
+
 export default function StartPage() {
   return (
     <main className="bg-[radial-gradient(circle_at_60%_0%,rgba(167,243,208,.28),transparent_28%)]">
@@ -40,9 +52,11 @@ export default function StartPage() {
               </h2>
               <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {learningSteps.map((step, index) => (
-                  <article
+                  <Link
                     key={step.title}
-                    className="group rounded-xl border border-slate-200 p-4 transition hover:border-emerald-200 hover:bg-emerald-50/30"
+                    id={`step-${index + 1}`}
+                    href={learningStepHrefs[index]}
+                    className="group scroll-mt-28 rounded-xl border border-slate-200 p-4 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-black text-emerald-600">
@@ -59,10 +73,13 @@ export default function StartPage() {
                     <p className="mt-1 text-xs text-slate-500">
                       {step.description}
                     </p>
-                    <p className="mt-4 text-[11px] text-slate-400">
-                      {step.time}
-                    </p>
-                  </article>
+                    <div className="mt-4 flex items-center justify-between text-[11px]">
+                      <span className="text-slate-400">{step.time}</span>
+                      <span className="flex items-center gap-1 font-bold text-emerald-600 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+                        开始 <ArrowRight className="size-3" />
+                      </span>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </section>
@@ -100,24 +117,28 @@ export default function StartPage() {
               </div>
               <ol className="mt-5 space-y-3">
                 {learningSteps.map((step, index) => (
-                  <li
-                    key={step.title}
-                    className="flex items-center gap-3 text-xs"
-                  >
-                    <span className="grid size-5 place-items-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
-                      {index + 1}
-                    </span>
-                    <span className="flex-1 text-slate-600">{step.title}</span>
-                    <span className="text-slate-400">{step.time}</span>
+                  <li key={step.title} className="text-xs">
+                    <Link
+                      href={learningStepHrefs[index]}
+                      className="group flex items-center gap-3 rounded-lg py-1 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    >
+                      <span className="grid size-5 place-items-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                        {index + 1}
+                      </span>
+                      <span className="flex-1 text-slate-600 group-hover:text-emerald-700">
+                        {step.title}
+                      </span>
+                      <span className="text-slate-400">{step.time}</span>
+                    </Link>
                   </li>
                 ))}
               </ol>
-              <button
-                type="button"
-                className="mt-6 w-full rounded-xl border border-emerald-300 py-3 text-sm font-bold text-emerald-600 hover:bg-emerald-50"
+              <Link
+                href={learningStepHrefs[0]}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300 py-3 text-sm font-bold text-emerald-600 transition hover:border-emerald-500 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
-                从第一步开始学习
-              </button>
+                从第一步开始学习 <ArrowRight className="size-4" />
+              </Link>
             </div>
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
               <div className="flex items-center justify-between">
